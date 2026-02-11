@@ -18,7 +18,8 @@ export default function ProgramDetailPage() {
     useEffect(() => {
         const fetchProgram = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/master/programs/${params.id}`);
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                const response = await axios.get(`${API_URL}/api/master/programs/${params.id}`);
                 setProgram(response.data);
                 setLoading(false);
             } catch (err) {

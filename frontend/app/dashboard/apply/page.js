@@ -41,6 +41,9 @@ export default function ApplyPage() {
         parentPhone: '',
         parentOccupation: '',
         parentSalary: '',
+        sponsorName: '',
+        informationSource: '',
+        fileLink: '',
     });
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -59,11 +62,12 @@ export default function ApplyPage() {
         setToken(token);
 
         const fetchData = async () => {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             try {
                 const [pathsRes, programsRes, myAppRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/master/paths'),
-                    fetch('http://localhost:5000/api/master/programs'),
-                    fetch('http://localhost:5000/api/pmb/my-application', {
+                    fetch(`${API_URL}/api/master/paths`),
+                    fetch(`${API_URL}/api/master/programs`),
+                    fetch(`${API_URL}/api/pmb/my-application`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     })
                 ]);
@@ -81,6 +85,7 @@ export default function ApplyPage() {
                         registrationPathId: app.registrationPathId || '',
                         studyProgramId: app.studyProgramId || '',
                         studyProgramId2: app.studyProgramId2 || '',
+                        fileLink: app.fileLink || '',
                         nik: app.nik || '',
                         gender: app.gender || '',
                         birthPlace: app.birthPlace || '',
@@ -97,6 +102,8 @@ export default function ApplyPage() {
                         parentPhone: app.parentPhone || '',
                         parentOccupation: app.parentOccupation || '',
                         parentSalary: app.parentSalary || '',
+                        sponsorName: app.sponsorName || '',
+                        informationSource: app.informationSource || '',
                     });
                 } else if (pathsData.length > 0 && programsData.length > 0) {
                     setFormData(prev => ({
@@ -142,7 +149,8 @@ export default function ApplyPage() {
         setSuccess('');
 
         try {
-            const res = await fetch('http://localhost:5000/api/pmb/apply', {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${API_URL}/api/pmb/apply`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -300,6 +308,18 @@ export default function ApplyPage() {
                                             </select>
                                         </div>
                                     </div>
+                                </div>
+                                <div className="space-y-2 pt-4 border-t border-slate-100">
+                                    <Label className="text-slate-700 font-bold">Link Berkas Pendaftaran (Google Drive/Cloud)</Label>
+                                    <Input
+                                        name="fileLink"
+                                        placeholder="https://drive.google.com/..."
+                                        value={formData.fileLink}
+                                        onChange={handleChange}
+                                        className="p-6 rounded-xl border-slate-200 focus:ring-[#052c65]"
+                                        required
+                                    />
+                                    <p className="text-[10px] text-slate-400 italic">Pastikan link berkas dapat diakses oleh panitia PMB.</p>
                                 </div>
                             </div>
                         )}
@@ -521,6 +541,43 @@ export default function ApplyPage() {
                                             <option value="1 Juta - 3 Juta">1 Juta - 3 Juta</option>
                                             <option value="3 Juta - 5 Juta">3 Juta - 5 Juta</option>
                                             <option value="> 5 Juta">&gt; 5 Juta</option>
+                                        </select>
+                                    </div>
+
+                                    {/* New Marketing Fields */}
+                                    <div className="space-y-2 md:col-span-2 pt-4 border-t border-slate-100">
+                                        <Label className="text-slate-700 font-bold text-lg">Informasi Tambahan</Label>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-slate-700 font-bold">Nama Sponsor (Jika ada)</Label>
+                                        <Input
+                                            name="sponsorName"
+                                            placeholder="Contoh: Nama Pemberi Referensi"
+                                            value={formData.sponsorName}
+                                            onChange={handleChange}
+                                            className="p-6 rounded-xl border-slate-200"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-slate-700 font-bold">Sumber Informasi PMB</Label>
+                                        <select
+                                            className="form-select w-full p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#052c65]/20 focus:border-[#052c65] transition-all bg-white text-sm"
+                                            name="informationSource"
+                                            value={formData.informationSource}
+                                            onChange={handleChange}
+                                            required
+                                        >
+                                            <option value="">Pilih Sumber Informasi</option>
+                                            <option value="Alumni STIKOM">Alumni STIKOM</option>
+                                            <option value="Mahasiswa Aktif STIKOM">Mahasiswa Aktif STIKOM</option>
+                                            <option value="Guru BK / Sekolah">Guru BK / Sekolah</option>
+                                            <option value="Sosial Media / Akun IG STIKOM">Sosial Media / Akun IG STIKOM</option>
+                                            <option value="Promosi STIKOM di Sekolah">Promosi STIKOM di Sekolah</option>
+                                            <option value="Pameran Pendidikan">Pameran Pendidikan</option>
+                                            <option value="Rekomendasi Saudara / Orang Tua">Rekomendasi Saudara / Orang Tua</option>
+                                            <option value="Banner / Baliho">Banner / Baliho</option>
                                         </select>
                                     </div>
                                 </div>

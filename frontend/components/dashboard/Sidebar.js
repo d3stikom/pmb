@@ -13,24 +13,40 @@ import {
     ClipboardList,
     Database,
     ChevronLeft,
-    Menu
+    Menu,
+    Newspaper,
+    Calendar
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar() {
     const [user, setUser] = useState(null);
+    const [role, setRole] = useState('PENDAFTAR');
     const pathname = usePathname();
     const { isSidebarOpen, setIsSidebarOpen, isMobile, toggleSidebar } = useSidebar();
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
-        if (userData) {
-            setUser(JSON.parse(userData));
-        }
-    }, []);
+        const legacyRole = localStorage.getItem('role');
 
-    const role = user?.role || 'PENDAFTAR';
+        let currentRole = 'PENDAFTAR';
+
+        if (userData) {
+            try {
+                const parsedUser = JSON.parse(userData);
+                setUser(parsedUser);
+                currentRole = parsedUser.role || 'PENDAFTAR';
+            } catch (e) {
+                console.error('Error parsing user data', e);
+            }
+        } else if (legacyRole) {
+            setUser({ role: legacyRole });
+            currentRole = legacyRole;
+        }
+
+        setRole(currentRole.toUpperCase());
+    }, []);
 
     const isActive = (path) => pathname === path;
 
@@ -165,6 +181,25 @@ export default function Sidebar() {
                                     active={isActive('/dashboard/users')}
                                     collapsed={!isSidebarOpen && !isMobile}
                                 />
+                                {isSidebarOpen && (
+                                    <li className="px-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 animate-in fade-in">
+                                        Informasi PMB
+                                    </li>
+                                )}
+                                <NavItem
+                                    href="/dashboard/news"
+                                    icon={<Newspaper size={20} />}
+                                    label="Manajemen Berita"
+                                    active={isActive('/dashboard/news')}
+                                    collapsed={!isSidebarOpen && !isMobile}
+                                />
+                                <NavItem
+                                    href="/dashboard/schedule"
+                                    icon={<Calendar size={20} />}
+                                    label="Jadwal PMB"
+                                    active={isActive('/dashboard/schedule')}
+                                    collapsed={!isSidebarOpen && !isMobile}
+                                />
                             </>
                         )}
                     </ul>
@@ -172,13 +207,15 @@ export default function Sidebar() {
 
                 {/* Bottom Section */}
                 <div className="p-4 border-t border-[#042452]">
-                    <NavItem
-                        href="/dashboard/settings"
-                        icon={<Settings size={20} />}
-                        label="Settings"
-                        active={isActive('/dashboard/settings')}
-                        collapsed={!isSidebarOpen && !isMobile}
-                    />
+                    {role === 'ADMIN' && (
+                        <NavItem
+                            href="/dashboard/settings"
+                            icon={<Settings size={20} />}
+                            label="Settings"
+                            active={isActive('/dashboard/settings')}
+                            collapsed={!isSidebarOpen && !isMobile}
+                        />
+                    )}
                 </div>
             </aside>
         </>

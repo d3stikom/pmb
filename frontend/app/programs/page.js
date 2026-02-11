@@ -25,7 +25,8 @@ export default function PublicProgramsPage() {
     useEffect(() => {
         const fetchPrograms = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/api/master/programs');
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                const response = await axios.get(`${API_URL}/api/master/programs`);
                 setPrograms(response.data);
                 setLoading(false);
             } catch (err) {

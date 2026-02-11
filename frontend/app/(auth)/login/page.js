@@ -25,7 +25,8 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/login', {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
@@ -40,6 +41,9 @@ export default function LoginPage() {
             // Store token and redirect
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('role', data.user.role);
+            localStorage.setItem('name', data.user.name);
+            localStorage.setItem('email', data.user.email);
             router.push('/dashboard');
         } catch (err) {
             setError(err.message);

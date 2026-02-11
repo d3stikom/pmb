@@ -19,7 +19,8 @@ export default function PathDetailPage() {
     useEffect(() => {
         const fetchPath = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/master/paths/${params.id}`);
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                const response = await axios.get(`${API_URL}/api/master/paths/${params.id}`);
                 setPath(response.data);
                 setLoading(false);
             } catch (err) {

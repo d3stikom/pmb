@@ -4,6 +4,11 @@ const dotenv = require('dotenv');
 const sequelize = require('./config/database');
 const User = require('./models/User');
 const Application = require('./models/Application');
+const RegistrationPath = require('./models/RegistrationPath');
+const StudyProgram = require('./models/StudyProgram');
+const News = require('./models/News');
+const Schedule = require('./models/Schedule');
+const Setting = require('./models/Setting');
 
 dotenv.config();
 
@@ -13,6 +18,10 @@ const PORT = process.env.PORT || 5000;
 const authRoutes = require('./routes/auth');
 const pmbRoutes = require('./routes/pmb');
 const masterRoutes = require('./routes/masterRoutes');
+const userRoutes = require('./routes/userRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const infoRoutes = require('./routes/infoRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +29,10 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/pmb', pmbRoutes);
 app.use('/api/master', masterRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/info', infoRoutes);
 
 // basic route
 app.get('/', (req, res) => {

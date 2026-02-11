@@ -5,23 +5,23 @@ import axios from 'axios';
 import {
     Search,
     Plus,
-    Filter,
-    MoreVertical,
-    CheckCircle2,
-    XCircle,
-    BookOpen,
+    Calendar,
+    Clock,
+    FileText,
     AlertCircle,
     Loader2,
     Pencil,
     Trash2,
-    X
+    X,
+    CheckCircle2,
+    XCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export default function StudyProgramsPage() {
-    const [programs, setPrograms] = useState([]);
+export default function ScheduleManagementPage() {
+    const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [error, setError] = useState(null);
@@ -31,9 +31,10 @@ export default function StudyProgramsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('ADD'); // 'ADD' or 'EDIT'
     const [formData, setFormData] = useState({
-        name: '',
-        code: '',
-        degree: 'S1',
+        eventName: '',
+        startDate: '',
+        endDate: '',
+        description: '',
         isActive: true
     });
     const [currentId, setCurrentId] = useState(null);
@@ -42,63 +43,51 @@ export default function StudyProgramsPage() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
-        const legacyRole = localStorage.getItem('role');
-
-        if (!token) {
+        if (!token || !userData) {
+            router.push('/login');
+            return;
+        }
+        const user = JSON.parse(userData);
+        if (user.role?.toUpperCase() !== 'ADMIN') {
             router.push('/dashboard');
             return;
         }
+        fetchSchedules();
+    }, [router]);
 
-        let role = legacyRole;
-        if (userData) {
-            try {
-                const user = JSON.parse(userData);
-                role = user.role;
-            } catch (e) {
-                console.error('Error parsing user data', e);
-            }
-        }
-
-        if (role?.toUpperCase() !== 'ADMIN') {
-            router.push('/dashboard');
-            return;
-        }
-
-        fetchPrograms();
-    }, []);
-
-    const fetchPrograms = async () => {
+    const fetchSchedules = async () => {
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            const response = await axios.get(`${API_URL}/api/master/admin/programs`, {
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/info/admin/schedules`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setPrograms(response.data);
+            setSchedules(response.data);
             setLoading(false);
         } catch (err) {
-            console.error('Error fetching programs:', err);
-            setError('Gagal memuat data program studi.');
+            console.error('Error fetching schedules:', err);
+            setError('Gagal memuat data jadwal.');
             setLoading(false);
         }
     };
 
-    const handleOpenModal = (mode, program = null) => {
+    const handleOpenModal = (mode, item = null) => {
         setModalMode(mode);
-        if (mode === 'EDIT' && program) {
-            setCurrentId(program.id);
+        if (mode === 'EDIT' && item) {
+            setCurrentId(item.id);
             setFormData({
-                name: program.name,
-                code: program.code,
-                degree: program.degree,
-                isActive: program.isActive
+                eventName: item.eventName,
+                startDate: new Date(item.startDate).toISOString().split('T')[0],
+                endDate: item.endDate ? new Date(item.endDate).toISOString().split('T')[0] : '',
+                description: item.description || '',
+                isActive: item.isActive
             });
         } else {
             setCurrentId(null);
             setFormData({
-                name: '',
-                code: '',
-                degree: 'S1',
+                eventName: '',
+                startDate: '',
+                endDate: '',
+                description: '',
                 isActive: true
             });
         }
@@ -118,49 +107,48 @@ export default function StudyProgramsPage() {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
             if (modalMode === 'ADD') {
-                await axios.post(`${API_URL}/api/master/programs`, formData, {
+                await axios.post(`${API_URL}/api/info/schedules`, formData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
-                await axios.put(`${API_URL}/api/master/programs/${currentId}`, formData, {
+                await axios.put(`${API_URL}/api/info/schedules/${currentId}`, formData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
-            fetchPrograms();
+            fetchSchedules();
             handleCloseModal();
         } catch (err) {
-            console.error('Error saving program:', err);
-            setError(err.response?.data?.message || 'Gagal menyimpan data.');
+            console.error('Error saving schedule:', err);
+            setError(err.response?.data?.message || 'Gagal menyimpan data jadwal.');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Apakah Anda yakin ingin menghapus program studi ini?')) return;
+        if (!confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) return;
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            await axios.delete(`${API_URL}/api/master/programs/${id}`, {
+            await axios.delete(`${API_URL}/api/info/schedules/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchPrograms();
+            fetchSchedules();
         } catch (err) {
-            console.error('Error deleting program:', err);
-            alert('Gagal menghapus data.');
+            console.error('Error deleting schedule:', err);
+            alert('Gagal menghapus jadwal.');
         }
     };
 
-    const filteredPrograms = programs.filter(prog =>
-        prog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prog.code.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredSchedules = schedules.filter(item =>
+        item.eventName.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
                 <Loader2 className="w-10 h-10 text-[#052c65] animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Memuat data...</p>
+                <p className="text-gray-500 font-medium">Memuat data jadwal...</p>
             </div>
         );
     }
@@ -170,15 +158,15 @@ export default function StudyProgramsPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#052c65]">Program Studi</h2>
-                    <p className="text-gray-500">Kelola daftar program studi dan informasi akademik.</p>
+                    <h2 className="text-2xl font-bold text-[#052c65]">Jadwal Pelaksanaan PMB</h2>
+                    <p className="text-gray-500">Kelola timeline dan jadwal penting penerimaan mahasiswa baru.</p>
                 </div>
                 <Button
                     onClick={() => handleOpenModal('ADD')}
                     className="bg-[#052c65] hover:bg-[#042452] text-white flex items-center gap-2"
                 >
                     <Plus size={18} />
-                    Tambah Program
+                    Tambah Jadwal
                 </Button>
             </div>
 
@@ -189,7 +177,7 @@ export default function StudyProgramsPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <Input
-                                placeholder="Cari nama atau kode prodi..."
+                                placeholder="Cari nama kegiatan..."
                                 className="pl-10 focus-visible:ring-[#052c65]"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -198,47 +186,50 @@ export default function StudyProgramsPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                    {filteredPrograms.length === 0 ? (
+                    {filteredSchedules.length === 0 ? (
                         <div className="p-12 text-center">
-                            <BookOpen className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-900">Tidak ada data</h3>
-                            <p className="text-gray-500">Program studi tidak ditemukan</p>
+                            <Calendar className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-900">Tidak ada jadwal</h3>
+                            <p className="text-gray-500">Silakan tambahkan jadwal kegiatan baru.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider font-semibold border-b border-gray-100">
-                                        <th className="px-6 py-4">Kode</th>
-                                        <th className="px-6 py-4">Nama Program Studi</th>
-                                        <th className="px-6 py-4 text-center">Jenjang</th>
+                                        <th className="px-6 py-4">Nama Kegiatan</th>
+                                        <th className="px-6 py-4">Tanggal Pelaksanaan</th>
                                         <th className="px-6 py-4">Status</th>
                                         <th className="px-6 py-4 text-right">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {filteredPrograms.map((prog) => (
-                                        <tr key={prog.id} className="hover:bg-blue-50/30 transition-colors group">
-                                            <td className="px-6 py-4">
-                                                <span className="inline-block px-2 py-1 rounded bg-slate-100 text-slate-600 font-mono text-xs font-bold">
-                                                    {prog.code}
-                                                </span>
+                                    {filteredSchedules.map((item) => (
+                                        <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                                            <td className="px-6 py-4 max-w-md">
+                                                <div className="font-bold text-[#052c65]">{item.eventName}</div>
+                                                <div className="text-xs text-gray-500 line-clamp-1">{item.description}</div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-[#052c65]">{prog.name}</div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`px-2 py-1 rounded-md text-xs font-bold ${prog.degree === 'S1' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                    {prog.degree}
-                                                </span>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                                                        <Clock size={12} className="text-blue-500" />
+                                                        {new Date(item.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                    {item.endDate && (
+                                                        <span className="text-[10px] text-gray-400 ml-4 italic">
+                                                            s/d {new Date(item.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {prog.isActive ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                                {item.isActive ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
                                                         <CheckCircle2 size={12} /> Aktif
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
                                                         <XCircle size={12} /> Non-Aktif
                                                     </span>
                                                 )}
@@ -248,7 +239,7 @@ export default function StudyProgramsPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleOpenModal('EDIT', prog)}
+                                                        onClick={() => handleOpenModal('EDIT', item)}
                                                         className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                     >
                                                         <Pencil size={16} />
@@ -256,7 +247,7 @@ export default function StudyProgramsPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleDelete(prog.id)}
+                                                        onClick={() => handleDelete(item.id)}
                                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     >
                                                         <Trash2 size={16} />
@@ -275,10 +266,10 @@ export default function StudyProgramsPage() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200">
                         <div className="flex items-center justify-between p-4 border-b">
                             <h3 className="text-lg font-bold text-[#052c65]">
-                                {modalMode === 'ADD' ? 'Tambah Program Studi' : 'Edit Program Studi'}
+                                {modalMode === 'ADD' ? 'Tambah Jadwal Baru' : 'Edit Jadwal'}
                             </h3>
                             <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
                                 <X size={20} />
@@ -291,52 +282,56 @@ export default function StudyProgramsPage() {
                                 </div>
                             )}
                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Kode Prodi</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nama Kegiatan</label>
                                 <Input
                                     required
-                                    value={formData.code}
-                                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                                    placeholder="Contoh: TI-S1"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nama Program Studi</label>
-                                <Input
-                                    required
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Contoh: S1 Teknik Informatika"
+                                    value={formData.eventName}
+                                    onChange={(e) => setFormData({ ...formData, eventName: e.target.value })}
+                                    placeholder="Contoh: Pendaftaran Gelombang 1"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Jenjang</label>
-                                    <select
-                                        className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#052c65]/20 focus:border-[#052c65]"
-                                        value={formData.degree}
-                                        onChange={(e) => setFormData({ ...formData, degree: e.target.value })}
-                                    >
-                                        <option value="S1">S1</option>
-                                        <option value="D3">D3</option>
-                                    </select>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Tanggal Mulai</label>
+                                    <Input
+                                        type="date"
+                                        required
+                                        value={formData.startDate}
+                                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                                    />
                                 </div>
-                                <div className="flex items-end pb-2">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="isActiveProg"
-                                            checked={formData.isActive}
-                                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                            className="w-4 h-4 text-[#052c65] border-gray-300 rounded focus:ring-[#052c65]"
-                                        />
-                                        <label htmlFor="isActiveProg" className="text-sm font-medium text-gray-700">Aktif</label>
-                                    </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Tanggal Selesai (Selesai)</label>
+                                    <Input
+                                        type="date"
+                                        value={formData.endDate}
+                                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                                    />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Deskripsi / Detail</label>
+                                <textarea
+                                    className="w-full px-3 py-2 border rounded-md text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#052c65]/20 focus:border-[#052c65]"
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Keterangan tambahan mengenai kegiatan..."
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="isActiveSche"
+                                    checked={formData.isActive}
+                                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                                    className="w-4 h-4 text-[#052c65] border-gray-300 rounded focus:ring-[#052c65]"
+                                />
+                                <label htmlFor="isActiveSche" className="text-sm font-medium text-gray-700 cursor-pointer">Jadwal Aktif / Ditampilkan</label>
                             </div>
                             <div className="flex justify-end gap-2 pt-4 border-t mt-4">
                                 <Button type="button" variant="outline" onClick={handleCloseModal} disabled={submitting}>Batal</Button>
                                 <Button type="submit" className="bg-[#052c65] hover:bg-[#042452] text-white" disabled={submitting}>
-                                    {submitting ? <Loader2 size={18} className="animate-spin" /> : 'Simpan Data'}
+                                    {submitting ? <Loader2 size={18} className="animate-spin" /> : 'Simpan Jadwal'}
                                 </Button>
                             </div>
                         </form>

@@ -9,19 +9,23 @@ import {
     MoreVertical,
     CheckCircle2,
     XCircle,
-    BookOpen,
+    FileText,
     AlertCircle,
     Loader2,
     Pencil,
     Trash2,
-    X
+    X,
+    Newspaper,
+    Image as ImageIcon,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export default function StudyProgramsPage() {
-    const [programs, setPrograms] = useState([]);
+export default function NewsManagementPage() {
+    const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [error, setError] = useState(null);
@@ -31,10 +35,11 @@ export default function StudyProgramsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('ADD'); // 'ADD' or 'EDIT'
     const [formData, setFormData] = useState({
-        name: '',
-        code: '',
-        degree: 'S1',
-        isActive: true
+        title: '',
+        content: '',
+        category: 'PMB',
+        image: '',
+        isPublished: true
     });
     const [currentId, setCurrentId] = useState(null);
     const [submitting, setSubmitting] = useState(false);
@@ -42,64 +47,52 @@ export default function StudyProgramsPage() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
-        const legacyRole = localStorage.getItem('role');
-
-        if (!token) {
+        if (!token || !userData) {
+            router.push('/login');
+            return;
+        }
+        const user = JSON.parse(userData);
+        if (user.role?.toUpperCase() !== 'ADMIN') {
             router.push('/dashboard');
             return;
         }
+        fetchNews();
+    }, [router]);
 
-        let role = legacyRole;
-        if (userData) {
-            try {
-                const user = JSON.parse(userData);
-                role = user.role;
-            } catch (e) {
-                console.error('Error parsing user data', e);
-            }
-        }
-
-        if (role?.toUpperCase() !== 'ADMIN') {
-            router.push('/dashboard');
-            return;
-        }
-
-        fetchPrograms();
-    }, []);
-
-    const fetchPrograms = async () => {
+    const fetchNews = async () => {
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            const response = await axios.get(`${API_URL}/api/master/admin/programs`, {
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/info/admin/news`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setPrograms(response.data);
+            setNews(response.data);
             setLoading(false);
         } catch (err) {
-            console.error('Error fetching programs:', err);
-            setError('Gagal memuat data program studi.');
+            console.error('Error fetching news:', err);
+            setError('Gagal memuat data berita.');
             setLoading(false);
         }
     };
 
-    const handleOpenModal = (mode, program = null) => {
+    const handleOpenModal = (mode, item = null) => {
         setModalMode(mode);
-        if (mode === 'EDIT' && program) {
-            setCurrentId(program.id);
+        if (mode === 'EDIT' && item) {
+            setCurrentId(item.id);
             setFormData({
-                name: program.name,
-                code: program.code,
-                degree: program.degree,
-                isActive: program.isActive
+                title: item.title,
+                content: item.content,
+                category: item.category || 'PMB',
+                image: item.image || '',
+                isPublished: item.isPublished
             });
         } else {
             setCurrentId(null);
             setFormData({
-                name: '',
-                code: '',
-                degree: 'S1',
-                isActive: true
+                title: '',
+                content: '',
+                category: 'PMB',
+                image: '',
+                isPublished: true
             });
         }
         setIsModalOpen(true);
@@ -115,52 +108,52 @@ export default function StudyProgramsPage() {
         setSubmitting(true);
         setError(null);
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             if (modalMode === 'ADD') {
-                await axios.post(`${API_URL}/api/master/programs`, formData, {
+                await axios.post(`${API_URL}/api/info/news`, formData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
-                await axios.put(`${API_URL}/api/master/programs/${currentId}`, formData, {
+                await axios.put(`${API_URL}/api/info/news/${currentId}`, formData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
-            fetchPrograms();
+            fetchNews();
             handleCloseModal();
         } catch (err) {
-            console.error('Error saving program:', err);
-            setError(err.response?.data?.message || 'Gagal menyimpan data.');
+            console.error('Error saving news:', err);
+            setError(err.response?.data?.message || 'Gagal menyimpan data berita.');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm('Apakah Anda yakin ingin menghapus program studi ini?')) return;
+        if (!confirm('Apakah Anda yakin ingin menghapus berita ini?')) return;
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
             const token = localStorage.getItem('token');
-            await axios.delete(`${API_URL}/api/master/programs/${id}`, {
+            await axios.delete(`${API_URL}/api/info/news/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchPrograms();
+            fetchNews();
         } catch (err) {
-            console.error('Error deleting program:', err);
-            alert('Gagal menghapus data.');
+            console.error('Error deleting news:', err);
+            alert('Gagal menghapus berita.');
         }
     };
 
-    const filteredPrograms = programs.filter(prog =>
-        prog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prog.code.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredNews = news.filter(item =>
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
                 <Loader2 className="w-10 h-10 text-[#052c65] animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Memuat data...</p>
+                <p className="text-gray-500 font-medium">Memuat data berita...</p>
             </div>
         );
     }
@@ -170,15 +163,15 @@ export default function StudyProgramsPage() {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#052c65]">Program Studi</h2>
-                    <p className="text-gray-500">Kelola daftar program studi dan informasi akademik.</p>
+                    <h2 className="text-2xl font-bold text-[#052c65]">Manajemen Berita PMB</h2>
+                    <p className="text-gray-500">Kelola informasi dan berita terbaru untuk pendaftar.</p>
                 </div>
                 <Button
                     onClick={() => handleOpenModal('ADD')}
                     className="bg-[#052c65] hover:bg-[#042452] text-white flex items-center gap-2"
                 >
                     <Plus size={18} />
-                    Tambah Program
+                    Tambah Berita
                 </Button>
             </div>
 
@@ -189,7 +182,7 @@ export default function StudyProgramsPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <Input
-                                placeholder="Cari nama atau kode prodi..."
+                                placeholder="Cari judul berita..."
                                 className="pl-10 focus-visible:ring-[#052c65]"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -198,57 +191,56 @@ export default function StudyProgramsPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                    {filteredPrograms.length === 0 ? (
+                    {filteredNews.length === 0 ? (
                         <div className="p-12 text-center">
-                            <BookOpen className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-900">Tidak ada data</h3>
-                            <p className="text-gray-500">Program studi tidak ditemukan</p>
+                            <Newspaper className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-900">Tidak ada berita</h3>
+                            <p className="text-gray-500">Silakan tambahkan berita baru.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider font-semibold border-b border-gray-100">
-                                        <th className="px-6 py-4">Kode</th>
-                                        <th className="px-6 py-4">Nama Program Studi</th>
-                                        <th className="px-6 py-4 text-center">Jenjang</th>
+                                        <th className="px-6 py-4">Berita</th>
+                                        <th className="px-6 py-4">Kategori</th>
                                         <th className="px-6 py-4">Status</th>
+                                        <th className="px-6 py-4">Tanggal</th>
                                         <th className="px-6 py-4 text-right">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {filteredPrograms.map((prog) => (
-                                        <tr key={prog.id} className="hover:bg-blue-50/30 transition-colors group">
+                                    {filteredNews.map((item) => (
+                                        <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                                            <td className="px-6 py-4 max-w-md">
+                                                <div className="font-bold text-[#052c65] line-clamp-1">{item.title}</div>
+                                                <div className="text-xs text-gray-500 line-clamp-1">{item.content}</div>
+                                            </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-block px-2 py-1 rounded bg-slate-100 text-slate-600 font-mono text-xs font-bold">
-                                                    {prog.code}
+                                                <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold">
+                                                    {item.category}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-[#052c65]">{prog.name}</div>
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={`px-2 py-1 rounded-md text-xs font-bold ${prog.degree === 'S1' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                    {prog.degree}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {prog.isActive ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                                                        <CheckCircle2 size={12} /> Aktif
+                                                {item.isPublished ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+                                                        <Eye size={10} /> Terbit
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                                                        <XCircle size={12} /> Non-Aktif
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
+                                                        <EyeOff size={10} /> Draft
                                                     </span>
                                                 )}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs text-gray-500">
+                                                {new Date(item.createdAt).toLocaleDateString('id-ID')}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleOpenModal('EDIT', prog)}
+                                                        onClick={() => handleOpenModal('EDIT', item)}
                                                         className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                                     >
                                                         <Pencil size={16} />
@@ -256,7 +248,7 @@ export default function StudyProgramsPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleDelete(prog.id)}
+                                                        onClick={() => handleDelete(item.id)}
                                                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     >
                                                         <Trash2 size={16} />
@@ -275,10 +267,10 @@ export default function StudyProgramsPage() {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200">
                         <div className="flex items-center justify-between p-4 border-b">
                             <h3 className="text-lg font-bold text-[#052c65]">
-                                {modalMode === 'ADD' ? 'Tambah Program Studi' : 'Edit Program Studi'}
+                                {modalMode === 'ADD' ? 'Tambah Berita Baru' : 'Edit Berita'}
                             </h3>
                             <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600">
                                 <X size={20} />
@@ -291,52 +283,70 @@ export default function StudyProgramsPage() {
                                 </div>
                             )}
                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Kode Prodi</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Judul Berita</label>
                                 <Input
                                     required
-                                    value={formData.code}
-                                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                                    placeholder="Contoh: TI-S1"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nama Program Studi</label>
-                                <Input
-                                    required
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Contoh: S1 Teknik Informatika"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    placeholder="Masukkan judul berita..."
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Jenjang</label>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Kategori</label>
                                     <select
                                         className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#052c65]/20 focus:border-[#052c65]"
-                                        value={formData.degree}
-                                        onChange={(e) => setFormData({ ...formData, degree: e.target.value })}
+                                        value={formData.category}
+                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                     >
-                                        <option value="S1">S1</option>
-                                        <option value="D3">D3</option>
+                                        <option value="PMB">PMB General</option>
+                                        <option value="AKADEMIK">Akademik</option>
+                                        <option value="BEASISWA">Beasiswa</option>
+                                        <option value="PENGUMUMAN">Pengumuman</option>
                                     </select>
                                 </div>
-                                <div className="flex items-end pb-2">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="isActiveProg"
-                                            checked={formData.isActive}
-                                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                            className="w-4 h-4 text-[#052c65] border-gray-300 rounded focus:ring-[#052c65]"
-                                        />
-                                        <label htmlFor="isActiveProg" className="text-sm font-medium text-gray-700">Aktif</label>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Status Terbit</label>
+                                    <div className="flex items-center gap-4 h-10">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.isPublished}
+                                                onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+                                                className="w-4 h-4 text-[#052c65] border-gray-300 rounded focus:ring-[#052c65]"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Publikasikan</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Isi Berita</label>
+                                <textarea
+                                    required
+                                    className="w-full px-3 py-2 border rounded-md text-sm min-h-[150px] focus:outline-none focus:ring-2 focus:ring-[#052c65]/20 focus:border-[#052c65]"
+                                    value={formData.content}
+                                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                                    placeholder="Tulis isi berita lengkap di sini..."
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">URL Gambar (Opsional)</label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={formData.image}
+                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                    <div className="p-2 bg-gray-100 rounded text-gray-400">
+                                        <ImageIcon size={20} />
                                     </div>
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 pt-4 border-t mt-4">
                                 <Button type="button" variant="outline" onClick={handleCloseModal} disabled={submitting}>Batal</Button>
                                 <Button type="submit" className="bg-[#052c65] hover:bg-[#042452] text-white" disabled={submitting}>
-                                    {submitting ? <Loader2 size={18} className="animate-spin" /> : 'Simpan Data'}
+                                    {submitting ? <Loader2 size={18} className="animate-spin" /> : 'Simpan Berita'}
                                 </Button>
                             </div>
                         </form>

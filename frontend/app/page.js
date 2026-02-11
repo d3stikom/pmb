@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Navbar from '@/components/Navbar';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GraduationCap, Award, BookOpen, Clock, Loader2 } from 'lucide-react';
+import { GraduationCap, Award, BookOpen, Clock, Loader2, Search, ShieldCheck } from 'lucide-react';
 
 function ProgramSectionDynamic() {
   const [programs, setPrograms] = useState([]);
@@ -14,7 +15,8 @@ function ProgramSectionDynamic() {
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/master/programs');
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${API_URL}/api/master/programs`);
         setPrograms(response.data);
         setLoading(false);
       } catch (err) {
@@ -69,6 +71,183 @@ function ProgramSectionDynamic() {
         </div>
       ))}
     </div>
+  );
+}
+
+function NewsSectionDynamic() {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${API_URL}/api/info/news`);
+        setNews(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching news:', err);
+        setLoading(false);
+      }
+    };
+    fetchNews();
+  }, []);
+
+  if (loading) return null;
+  if (news.length === 0) return null;
+
+  return (
+    <section className="py-20 bg-gray-50">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#052c65] mb-4">Berita & Pengumuman</h2>
+          <div className="w-20 h-1.5 bg-[#ffc107] mx-auto rounded-full" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {news.slice(0, 3).map((item) => (
+            <div key={item.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl transition-all group flex flex-col">
+              {item.image && (
+                <div className="h-48 overflow-hidden">
+                  <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                </div>
+              )}
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="bg-blue-50 text-[#052c65] text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">{item.category}</span>
+                  <span className="text-[10px] text-gray-400 font-medium">{new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+                <h3 className="text-xl font-bold text-[#052c65] mb-3 group-hover:text-[#ffc107] transition-colors line-clamp-2">{item.title}</h3>
+                <p className="text-gray-600 text-sm mb-6 line-clamp-3 leading-relaxed flex-1">{item.content}</p>
+                <Link href={`/news/${item.id}`} className="inline-flex items-center text-[#052c65] font-bold text-sm hover:gap-2 transition-all">
+                  Baca Selengkapnya &rarr;
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EventsSectionDynamic() {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${API_URL}/api/info/schedules`);
+        setEvents(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  if (loading) return null;
+  if (events.length === 0) return null;
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#052c65] mb-4">Agenda & Jadwal Penting</h2>
+          <div className="w-20 h-1.5 bg-[#ffc107] mx-auto rounded-full" />
+        </div>
+        <div className="max-w-4xl mx-auto space-y-4">
+          {events.map((event) => (
+            <div key={event.id} className="flex flex-col md:flex-row gap-6 p-6 rounded-2xl bg-slate-50 border border-slate-100 items-center hover:border-[#ffc107] transition-all">
+              <div className="flex flex-col items-center justify-center min-w-[100px] h-[100px] bg-white rounded-2xl shadow-sm border border-slate-100">
+                <span className="text-xs font-bold text-gray-400 uppercase">{new Date(event.startDate).toLocaleDateString('id-ID', { month: 'short' })}</span>
+                <span className="text-4xl font-black text-[#052c65]">{new Date(event.startDate).getDate()}</span>
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-bold text-[#052c65] mb-2">{event.eventName}</h3>
+                <p className="text-gray-600 text-sm mb-3">{event.description}</p>
+                <div className="flex items-center justify-center md:justify-start gap-4 text-xs font-bold text-amber-600">
+                  <span className="flex items-center gap-1">
+                    <Clock size={14} />
+                    {new Date(event.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {event.endDate && ` s/d ${new Date(event.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`}
+                  </span>
+                </div>
+              </div>
+              <Link href="/register">
+                <Button className="bg-[#052c65] hover:bg-[#042452] text-white px-6 rounded-full font-bold">Daftar</Button>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ValidationSection() {
+  const [searchId, setSearchId] = useState('');
+  const router = useRouter();
+
+  const handleCheck = (e) => {
+    e.preventDefault();
+    const id = searchId.trim();
+    if (!id) return;
+
+    console.log('Verifying ID:', id);
+    router.push(`/verify/${id}`);
+  };
+
+  return (
+    <section className="py-24 bg-[#052c65] relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-4xl mx-auto bg-white/5 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-[2rem] shadow-2xl">
+          <div className="flex flex-col md:flex-row items-center gap-12">
+            <div className="flex-1 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+                <ShieldCheck size={14} /> Keamanan Pendaftaran
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">Cek Validasi <br /><span className="text-[#ffc107]">Pendaftaran Anda</span></h2>
+              <p className="text-blue-100/70 text-sm leading-relaxed font-medium">
+                Gunakan fitur ini untuk memverifikasi keaslian kartu pendaftaran Anda. Masukkan ID Pendaftaran yang tertera pada kartu atau formulir.
+              </p>
+            </div>
+
+            <div className="w-full md:w-auto">
+              <form onSubmit={handleCheck} className="flex flex-col gap-3">
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-blue-300 group-focus-within:text-[#ffc107] transition-colors">
+                    <Search size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Masukkan ID Pendaftaran..."
+                    value={searchId}
+                    onChange={(e) => setSearchId(e.target.value)}
+                    className="w-full md:w-64 bg-white/10 border border-white/20 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-blue-200/50 font-bold focus:outline-none focus:ring-2 focus:ring-[#ffc107]/50 focus:border-[#ffc107] transition-all"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleCheck}
+                  size="lg"
+                  className="bg-[#ffc107] hover:bg-[#e6ae06] text-[#052c65] font-black w-full rounded-2xl shadow-xl shadow-[#ffc107]/20 uppercase tracking-widest text-xs py-6"
+                >
+                  Verifikasi Sekarang
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -218,6 +397,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* News Section */}
+      <NewsSectionDynamic />
+
+      {/* Validation Check */}
+      <ValidationSection />
+
+      {/* Events Section */}
+      <EventsSectionDynamic />
 
       {/* Footer */}
       <footer className="bg-[#052c65] text-slate-300 py-16">

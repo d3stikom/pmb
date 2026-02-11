@@ -65,6 +65,11 @@ const Application = sequelize.define('Application', {
     parentOccupation: DataTypes.STRING,
     parentSalary: DataTypes.STRING,
 
+    // Marketing Data
+    sponsorName: DataTypes.STRING,
+    informationSource: DataTypes.STRING,
+    fileLink: DataTypes.STRING,
+
     status: {
         type: DataTypes.ENUM('DRAFT', 'SUBMITTED', 'VERIFIED', 'REJECTED'),
         defaultValue: 'DRAFT',
