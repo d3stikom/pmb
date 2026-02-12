@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, FileText, CheckCircle, AlertCircle, TrendingUp, ShoppingBag, BarChart2, Clock, XCircle, BookOpen, Calendar, Eye, Download, Pencil } from 'lucide-react';
+import { Users, FileText, CheckCircle, AlertCircle, TrendingUp, ShoppingBag, BarChart2, Clock, XCircle, BookOpen, Calendar, Eye, Download, Pencil, CreditCard, Send, ExternalLink } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 
 export default function DashboardPage() {
@@ -13,6 +13,10 @@ export default function DashboardPage() {
     const [user, setUser] = useState(null);
     const [adminStats, setAdminStats] = useState(null);
     const [application, setApplication] = useState(null);
+    const [paymentProofLink, setPaymentProofLink] = useState('');
+    const [submittingPayment, setSubmittingPayment] = useState(false);
+    const [paymentSuccess, setPaymentSuccess] = useState('');
+    const [paymentError, setPaymentError] = useState('');
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -41,6 +45,7 @@ export default function DashboardPage() {
                     });
                     const data = await res.json();
                     setApplication(data.application);
+                    setPaymentProofLink(data.application?.paymentProofLink || '');
                 }
 
                 // Fetch Public Info (News & Schedules)
@@ -333,6 +338,146 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Information Section - Only for Applicants with SUBMITTED or VERIFIED status */}
+            {user?.role === 'APPLICANT' && application && (application.status === 'SUBMITTED' || application.status === 'VERIFIED') && (
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border-t-4 border-amber-500 shadow-lg mb-8">
+                    <div className="px-4 py-3 border-b border-amber-100 flex justify-between items-center bg-amber-100/50">
+                        <h3 className="text-lg font-medium text-amber-900 flex items-center gap-2">
+                            <CreditCard size={18} />
+                            Informasi Pembayaran
+                        </h3>
+                    </div>
+                    <div className="p-6 space-y-6">
+                        <div className="bg-white rounded-xl p-6 border border-amber-200 shadow-sm">
+                            <h4 className="text-sm font-bold text-amber-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <AlertCircle size={16} /> Biaya Pendaftaran dan Daftar Ulang
+                            </h4>
+                            <div className="space-y-3 text-sm">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 shrink-0"></div>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        <span className="font-bold">Bank:</span> Bank Mandiri
+                                    </p>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 shrink-0"></div>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        <span className="font-bold">Atas Nama:</span> STIKOM PGRI Banyuwangi
+                                    </p>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-2 h-2 bg-amber-500 rounded-full mt-1.5 shrink-0"></div>
+                                    <p className="text-gray-700 leading-relaxed">
+                                        <span className="font-bold">No. Rekening:</span> <span className="font-mono bg-amber-100 px-2 py-1 rounded text-amber-900">1430558888788</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-amber-100">
+                                <p className="text-xs text-gray-600 leading-relaxed">
+                                    Setelah melakukan transfer, silakan screenshot bukti pembayaran dan kirimkan ke nomor WhatsApp:
+                                    <a href="https://wa.me/6282143954320" target="_blank" rel="noopener noreferrer" className="font-bold text-green-600 hover:underline inline-flex items-center gap-1 ml-1">
+                                        0821-4395-4320 <ExternalLink size={12} />
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Payment Proof Submission Form */}
+                        <div className="bg-white rounded-xl p-6 border border-amber-200 shadow-sm">
+                            <h4 className="text-sm font-bold text-amber-900 uppercase tracking-wider mb-4">Upload Bukti Transfer</h4>
+                            {paymentSuccess && (
+                                <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm mb-4 flex items-center gap-2 border border-green-200">
+                                    <CheckCircle size={16} />
+                                    {paymentSuccess}
+                                </div>
+                            )}
+                            {paymentError && (
+                                <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-4 flex items-center gap-2 border border-red-200">
+                                    <AlertCircle size={16} />
+                                    {paymentError}
+                                </div>
+                            )}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 mb-2 block">
+                                        Link Bukti Transfer (Google Drive / Cloud Storage)
+                                    </label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://drive.google.com/..."
+                                        value={paymentProofLink}
+                                        onChange={(e) => setPaymentProofLink(e.target.value)}
+                                        className="w-full p-3 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1 italic">Upload screenshot bukti transfer ke Google Drive, lalu paste link-nya di sini.</p>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        if (!paymentProofLink.trim()) {
+                                            setPaymentError('Link bukti transfer tidak boleh kosong.');
+                                            return;
+                                        }
+                                        setSubmittingPayment(true);
+                                        setPaymentError('');
+                                        setPaymentSuccess('');
+                                        try {
+                                            const token = localStorage.getItem('token');
+                                            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                                            const res = await fetch(`${API_URL}/api/pmb/apply`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${token}`
+                                                },
+                                                body: JSON.stringify({
+                                                    ...application,
+                                                    paymentProofLink,
+                                                    status: application.status
+                                                })
+                                            });
+                                            if (!res.ok) throw new Error('Gagal menyimpan bukti transfer');
+                                            setPaymentSuccess('Bukti transfer berhasil disimpan!');
+                                            // Update local state
+                                            setApplication({ ...application, paymentProofLink });
+                                        } catch (err) {
+                                            setPaymentError(err.message);
+                                        } finally {
+                                            setSubmittingPayment(false);
+                                        }
+                                    }}
+                                    disabled={submittingPayment}
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {submittingPayment ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send size={18} /> Kirim Bukti Transfer
+                                        </>
+                                    )}
+                                </button>
+                                {application.paymentProofLink && (
+                                    <div className="pt-3 border-t border-gray-100">
+                                        <p className="text-xs text-gray-500 mb-2">Bukti transfer yang sudah diupload:</p>
+                                        <a
+                                            href={application.paymentProofLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-bold text-blue-600 hover:underline inline-flex items-center gap-1"
+                                        >
+                                            <Eye size={14} /> Lihat Bukti Transfer
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

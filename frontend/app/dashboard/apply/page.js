@@ -27,6 +27,8 @@ export default function ApplyPage() {
         studyProgramId2: '',
         nik: '',
         gender: '',
+        address: '',
+        mapLink: '',
         birthPlace: '',
         birthDate: '',
         religion: '',
@@ -88,6 +90,8 @@ export default function ApplyPage() {
                         fileLink: app.fileLink || '',
                         nik: app.nik || '',
                         gender: app.gender || '',
+                        address: app.address || '',
+                        mapLink: app.mapLink || '',
                         birthPlace: app.birthPlace || '',
                         birthDate: app.birthDate || '',
                         religion: app.religion || '',
@@ -353,6 +357,39 @@ export default function ApplyPage() {
                                             <option value="Laki-laki">Laki-laki</option>
                                             <option value="Perempuan">Perempuan</option>
                                         </select>
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-slate-700 font-bold">Alamat Lengkap (Sesuai KTP)</Label>
+                                        <textarea
+                                            name="address"
+                                            rows={3}
+                                            placeholder="Masukkan alamat lengkap (Jalan, RT/RW, Dusun, Desa, Kecamatan)"
+                                            value={formData.address}
+                                            onChange={handleChange}
+                                            className="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#052c65]/20 focus:border-[#052c65] transition-all bg-white text-sm"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-slate-700 font-bold">Link PIN Maps / Koordinat (Opsional)</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                name="mapLink"
+                                                placeholder="Contoh: https://maps.app.goo.gl/... atau -8.123, 114.123"
+                                                value={formData.mapLink}
+                                                onChange={handleChange}
+                                                className="p-6 rounded-xl border-slate-200"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => window.open('https://www.google.com/maps', '_blank')}
+                                                className="h-auto rounded-xl border-slate-200 text-xs font-bold"
+                                            >
+                                                Buka Maps
+                                            </Button>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 italic">Buka Google Maps, titik lokasi rumah Anda, lalu salin link 'Bagikan' atau 'Koordinat' ke sini.</p>
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-slate-700 font-bold">Tempat Lahir</Label>

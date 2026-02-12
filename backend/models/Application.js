@@ -46,6 +46,8 @@ const Application = sequelize.define('Application', {
     // Personal Data
     nik: DataTypes.STRING(16),
     gender: DataTypes.ENUM('Laki-laki', 'Perempuan'),
+    address: DataTypes.TEXT,
+    mapLink: DataTypes.STRING,
     birthPlace: DataTypes.STRING,
     birthDate: DataTypes.DATEONLY,
     religion: DataTypes.STRING,
@@ -69,6 +71,7 @@ const Application = sequelize.define('Application', {
     sponsorName: DataTypes.STRING,
     informationSource: DataTypes.STRING,
     fileLink: DataTypes.STRING,
+    paymentProofLink: DataTypes.STRING,
 
     status: {
         type: DataTypes.ENUM('DRAFT', 'SUBMITTED', 'VERIFIED', 'REJECTED'),

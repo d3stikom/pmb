@@ -241,6 +241,22 @@ export default function ApplicationDetailPage({ params }) {
                                     <label className="text-xs font-bold text-gray-400 uppercase block mb-1">NIK</label>
                                     <p className="text-sm font-medium text-gray-900">{application.nik || '-'}</p>
                                 </div>
+                                <div className="md:col-span-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase block mb-1">Alamat Lengkap</label>
+                                    <p className="text-sm font-medium text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-100 whitespace-pre-line">
+                                        {application.address || 'Alamat belum diisi'}
+                                    </p>
+                                    {application.mapLink && (
+                                        <a
+                                            href={application.mapLink.startsWith('http') ? application.mapLink : `https://www.google.com/maps/search/?api=1&query=${application.mapLink}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[10px] font-bold text-blue-600 hover:underline mt-2 inline-flex items-center gap-1"
+                                        >
+                                            <MapPin size={10} /> Lihat di Google Maps
+                                        </a>
+                                    )}
+                                </div>
                                 <div>
                                     <label className="text-xs font-bold text-gray-400 uppercase block mb-1">Email</label>
                                     <p className="text-sm font-medium text-gray-900">{application.User?.email}</p>
@@ -362,6 +378,19 @@ export default function ApplicationDetailPage({ params }) {
                                         className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
                                     >
                                         <FileText size={12} /> Buka Link Berkas
+                                    </a>
+                                </div>
+                            )}
+                            {application.paymentProofLink && (
+                                <div className="pt-2 border-t border-amber-100">
+                                    <label className="text-[10px] font-bold text-amber-600 uppercase block mb-1">Bukti Transfer</label>
+                                    <a
+                                        href={application.paymentProofLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs font-bold text-green-600 hover:underline flex items-center gap-1"
+                                    >
+                                        <FileText size={12} /> Lihat Bukti Transfer
                                     </a>
                                 </div>
                             )}

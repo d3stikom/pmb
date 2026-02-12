@@ -62,10 +62,10 @@ router.post('/apply', verifyToken, async (req, res) => {
     try {
         const {
             registrationPathId, studyProgramId, studyProgramId2,
-            nik, gender, birthPlace, birthDate, religion, phone,
+            nik, gender, address, mapLink, birthPlace, birthDate, religion, phone,
             schoolName, schoolType, schoolProvince, schoolCity, graduationYear,
             fatherName, motherName, parentPhone, parentOccupation, parentSalary,
-            sponsorName, informationSource, fileLink,
+            sponsorName, informationSource, fileLink, paymentProofLink,
             status // Optional: can be DRAFT or SUBMITTED
         } = req.body;
 
@@ -76,6 +76,8 @@ router.post('/apply', verifyToken, async (req, res) => {
             studyProgramId2,
             nik,
             gender,
+            address,
+            mapLink,
             birthPlace,
             birthDate,
             religion,
@@ -93,6 +95,7 @@ router.post('/apply', verifyToken, async (req, res) => {
             sponsorName,
             informationSource,
             fileLink,
+            paymentProofLink,
             status: status || 'SUBMITTED'
         };
 
