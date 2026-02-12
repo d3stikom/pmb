@@ -15,7 +15,7 @@ export const metadata = {
   title: "PMB STIKOM PGRI Banyuwangi",
   description: "PMB STIKOM PGRI Banyuwangi",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/logo.png",
   },
 };
 
