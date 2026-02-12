@@ -113,8 +113,8 @@ router.post('/apply', verifyToken, async (req, res) => {
     }
 });
 
-// Get Specific Application Details (for Admin and Prodi)
-router.get('/applications/:id', verifyToken, authorizeRoles('ADMIN', 'PRODI'), async (req, res) => {
+// Get Specific Application Details (for Admin, Prodi, and Applicant viewing their own)
+router.get('/applications/:id', verifyToken, async (req, res) => {
     try {
         const application = await Application.findByPk(req.params.id, {
             include: [
@@ -129,12 +129,19 @@ router.get('/applications/:id', verifyToken, authorizeRoles('ADMIN', 'PRODI'), a
             return res.status(404).json({ message: 'Application not found' });
         }
 
-        // Check if PRODI is authorized to view this application
-        if (req.userRole === 'PRODI' && req.user.studyProgramId) {
+        // Authorization checks
+        if (req.userRole === 'APPLICANT') {
+            // Applicants can only view their own application
+            if (application.userId !== req.userId) {
+                return res.status(403).json({ message: 'Unauthorized to access this application' });
+            }
+        } else if (req.userRole === 'PRODI' && req.user.studyProgramId) {
+            // PRODI can only view applications for their study program
             if (application.studyProgramId !== req.user.studyProgramId && application.studyProgramId2 !== req.user.studyProgramId) {
                 return res.status(403).json({ message: 'Unauthorized to access this application' });
             }
         }
+        // ADMIN can view all applications (no additional check needed)
 
         res.json({ application });
     } catch (error) {

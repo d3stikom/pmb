@@ -13,7 +13,7 @@ export default function Footer() {
                 <strong>Copyright &copy; {new Date().getFullYear()} <a href="#" className="text-blue-600 hover:underline">PMB STIKOM PGRI Banyuwangi</a>.</strong> All rights reserved.
             </div>
             <div className="hidden md:block">
-                <b>Version</b> 3.2.0
+                <b>Version</b> 1.0.0
             </div>
         </footer>
     );

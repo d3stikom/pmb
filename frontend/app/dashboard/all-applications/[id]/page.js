@@ -35,15 +35,21 @@ export default function ApplicationDetailPage({ params }) {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState(null);
+    const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
         const fetchApplication = async () => {
             try {
                 const token = localStorage.getItem('token');
-                if (!token) {
+                const userData = localStorage.getItem('user');
+
+                if (!token || !userData) {
                     router.push('/login');
                     return;
                 }
+
+                const parsedUser = JSON.parse(userData);
+                setUserRole(parsedUser.role);
 
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
                 const response = await axios.get(`${API_URL}/api/pmb/applications/${id}`, {
@@ -151,7 +157,7 @@ export default function ApplicationDetailPage({ params }) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {application.status === 'SUBMITTED' && (
+                    {userRole === 'ADMIN' && application.status === 'SUBMITTED' && (
                         <>
                             <Button
                                 onClick={() => handleUpdateStatus('REJECTED')}
@@ -177,7 +183,7 @@ export default function ApplicationDetailPage({ params }) {
                             <ShieldCheck size={18} /> TERVERIFIKASI
                         </Badge>
                     )}
-                    {application.status === 'REJECTED' && (
+                    {userRole === 'ADMIN' && application.status === 'REJECTED' && (
                         <Button
                             onClick={() => handleUpdateStatus('SUBMITTED')}
                             variant="outline"
@@ -383,15 +389,17 @@ export default function ApplicationDetailPage({ params }) {
                             )}
                             {application.paymentProofLink && (
                                 <div className="pt-2 border-t border-amber-100">
-                                    <label className="text-[10px] font-bold text-amber-600 uppercase block mb-1">Bukti Transfer</label>
-                                    <a
-                                        href={application.paymentProofLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs font-bold text-green-600 hover:underline flex items-center gap-1"
-                                    >
-                                        <FileText size={12} /> Lihat Bukti Transfer
-                                    </a>
+                                    <label className="text-[10px] font-bold text-amber-600 uppercase block mb-2">Bukti Transfer</label>
+                                    <div className="bg-white rounded-lg border-2 border-green-200 overflow-hidden">
+                                        <img
+                                            src={application.paymentProofLink}
+                                            alt="Bukti Transfer"
+                                            className="w-full h-auto object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => window.open(application.paymentProofLink, '_blank')}
+                                            title="Klik untuk memperbesar"
+                                        />
+                                    </div>
+                                    <p className="text-[9px] text-gray-500 mt-1 text-center italic">Klik gambar untuk memperbesar</p>
                                 </div>
                             )}
                         </CardContent>

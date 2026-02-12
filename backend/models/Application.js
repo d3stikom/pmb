@@ -71,7 +71,8 @@ const Application = sequelize.define('Application', {
     sponsorName: DataTypes.STRING,
     informationSource: DataTypes.STRING,
     fileLink: DataTypes.STRING,
-    paymentProofLink: DataTypes.STRING,
+    paymentProofLink: DataTypes.TEXT, // Changed to TEXT to support base64 images
+
 
     status: {
         type: DataTypes.ENUM('DRAFT', 'SUBMITTED', 'VERIFIED', 'REJECTED'),
